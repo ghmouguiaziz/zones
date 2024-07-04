@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    restart: unless-stopped
+    cap_add:
+      - SYS_NICE
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: zones
+    ports:
+      - 3306:3306
+    volumes:
+      - ./cache/mysql:/var/lib/mysql
+      - ./conf-mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+  prix-backend:
+    container_name: zones-backend
+    depends_on:
+      - mysql
+    image: registry.gitlab.tech.orange/movetocloudinventory/gestion_des_zones/zones:latest
+    restart: on-failure
+    environment:
+
+      - spring_datasource_url=jdbc:mysql://mysql:3306/zones?createDatabaseIfNotExist=true
+      - spring_datasource_username=root
+      - spring_datasource_password=root
+      - spring_jpa_hibernate_ddl_auto=update
+
+    ports:
+      - 8090:8090
+
+
+
+    stdin_open: true
+    tty: true
+
+
+

@@ -1,0 +1,45 @@
+
+
+stages:
+  - build
+  - test
+  - delivery
+
+
+variables:
+  IMAGE_NAME: "zones:latest"
+  REGISTRY_URL: "registry.gitlab.tech.orange/movetocloudinventory/gestion_des_zones"
+  SONAR_TOKEN: "squ_0c934b2d2963392781b7bc35e4610c74f2156f8b"
+
+build:
+  stage: build
+  image: maven:latest
+  script:
+    - mvn clean install -B
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/**
+
+
+
+
+analyze:
+  stage: test
+  image: maven:latest
+  script:
+    - mvn sonar:sonar -Dsonar.host.url=http://172.18.131.140:9000 -Dsonar.login=$SONAR_TOKEN -Dsonar.java.binaries=target/classes
+  tags:
+    - testDeploy
+delivery:
+  stage: delivery
+  image: docker:latest
+  script:
+    - docker build -t $IMAGE_NAME .
+    - docker login -u mohamedaziz.ghmougui -p LeaQvGUq4c7RtvrXVq7x registry.gitlab.tech.orange/movetocloudinventory/gestion_des_zones
+    - docker tag $IMAGE_NAME $REGISTRY_URL/$IMAGE_NAME
+    - docker push $REGISTRY_URL/$IMAGE_NAME
+  only:
+    - devlop
+  tags:
+    - testDeploy
